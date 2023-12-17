@@ -1,0 +1,108 @@
+name: CICD
+
+# Trigger
+on: [push]
+
+# some global variables to be reused later
+env:
+  CONTAINER_NAME: occupancy-service-container
+  IMAGE_NAME: occupancy-service-docker-image
+  WORKING_DIR: /home/ec2-user/occupancy-detector-service
+  MONITOR_CONTAINER_NAME: occupancy-monitor-container
+  MONITOR_IMAGE_NAME: occupancy-monitor-docker-image
+
+# jobs to do
+jobs:
+  # we have a build job
+  build:
+    # base image
+    runs-on: ubuntu-latest
+
+    # steps to perform in build job
+    steps:
+    # Checks out / Brings the repository under $GITHUB_WORKSPACE, so the job can access it
+    - uses: actions/checkout@v3
+
+    # Sets up a specified version of Python and adds it to PATH
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    # Builds the Docker image
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME .
+
+    # Runs the Docker container and executes the tests
+    # The container runs in detached mode and sleeps for 10 seconds to allow the service to start
+    # Afterward, it runs pytest to execute the tests, and then the logs are outputted
+    # for review if needed
+    - name: Run Tests inside Docker
+      run: |
+        docker run --name $CONTAINER_NAME -d $IMAGE_NAME:latest /bin/sh -c "sleep 10 && pytest /code/tests"
+        docker logs $CONTAINER_NAME
+
+
+
+  deploy:
+    # Run this job on an Ubuntu-latest runner
+    runs-on: ubuntu-latest
+
+    # List of steps to execute
+    steps:
+    # Step to checkout the code from the current repo
+    - name: Checkout code
+      uses: actions/checkout@v3
+    # step to prepare ssh diretory to manage ssh keys
+    - name: Prepare SSH directory
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh 
+    # put ssh key in ~/.ssh dir and enable read permission
+    - name: Setup SSH key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa             
+    # testing ssh connection to target deployement location (verbose / debugging enabled)
+    - name: Test SSH Connection
+      run: ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH Test Successful'"
+
+#      run: ssh -i ~/.ssh/id_rsa -vvv -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH Test Successful'"
+
+
+    # Step to sync the code to the EC2 instance
+    - name: Sync to EC2
+      run: |
+        # Add the EC2 host to known_hosts to avoid SSH authenticity confirmation
+        ssh-keyscan ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+        # Use rsync to sync the code
+        rsync -rav --delete ./ ${{ secrets.USERNAME }}@${{ secrets.HOST }}:$WORKING_DIR
+      # Environment variables used in this step
+      env:
+        HOST: ${{ secrets.HOST }}            # EC2 hostname
+        USERNAME: ${{ secrets.USERNAME }}    # SSH username for EC2
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH private key for authentication
+
+    - name: Occ Service Docker build and restart
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.HOST }} '
+        sudo docker stop ${{ env.CONTAINER_NAME }} || true
+        sudo docker rm ${{ env.CONTAINER_NAME }}  || true
+        sudo docker rmi ${{ env.IMAGE_NAME }} || true
+        cd ${{ env.WORKING_DIR }}
+        sudo docker build -t ${{ env.IMAGE_NAME }} .
+        sudo docker run -it -d -p 5000:5000 --name ${{ env.CONTAINER_NAME }} ${{ env.IMAGE_NAME }}'
+
+
+
+  # MONITOR_CONTAINER_NAME: occupancy-monitor-container
+  # MONITOR_IMAGE_NAME: occupancy-monitor-docker-image
+  #   - name: Occ Data Monitor Docker build and restart
+  #     run: |
+  #       ssh -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.HOST }} '
+  #       sudo docker stop ${{ env.MONITOR_CONTAINER_NAME }} || true
+  #       sudo docker rm ${{ env.MONITOR_CONTAINER_NAME }}  || true
+  #       sudo docker rmi ${{ env.MONITOR_IMAGE_NAME }} || true
+  #       cd ${{ env.WORKING_DIR }}
+  #       sudo docker build -t ${{ env.MONITOR_IMAGE_NAME }} .
+  #       sudo docker run -it -d -p 5000:5000 --name ${{ env.MONITOR_CONTAINER_NAME }} ${{ env.MONITOR_IMAGE_NAME }}'

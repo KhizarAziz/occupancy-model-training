@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pytest
+httpx #dependency for starlette.testclient
+pydantic
+scikit-learn==1.2.2
+pandas
+numpy
+matplotlib
+seaborn
+boto3
