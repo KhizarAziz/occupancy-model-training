@@ -80,7 +80,7 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}    # SSH username for EC2
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH private key for authentication
 
-
+    # setting up container for running inference service for our model
     - name: Occ Service Docker build and restart
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.HOST }} '
@@ -91,10 +91,7 @@ jobs:
         sudo docker build -f inference_service/Dockerfile -t ${{ env.IMAGE_NAME }} .
         sudo docker run -it -d -p 5000:5000 --name ${{ env.CONTAINER_NAME }} ${{ env.IMAGE_NAME }}'
 
-
-
-  # MONITOR_CONTAINER_NAME: occupancy-monitor-container
-  # MONITOR_IMAGE_NAME: occupancy-monitor-docker-image
+    # setting up container for data drift monitoring 
     - name: Occ Data Monitor Docker build and restart
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.HOST }} '
@@ -103,4 +100,4 @@ jobs:
         sudo docker rmi ${{ env.MONITOR_IMAGE_NAME }} || true
         cd ${{ env.WORKING_DIR }}
         sudo docker build -f drift_monitoring/Dockerfile -t ${{ env.MONITOR_IMAGE_NAME }} .
-        sudo docker run -it -d --name ${{ env.MONITOR_CONTAINER_NAME }} ${{ env.MONITOR_IMAGE_NAME }}'
+        sudo docker run -e DATA_BUCKET=${{ secrets.DATA_BUCKET_NAME }}  -it -d --name ${{ env.MONITOR_CONTAINER_NAME }} ${{ env.MONITOR_IMAGE_NAME }}'

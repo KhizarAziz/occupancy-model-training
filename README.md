@@ -1,5 +1,5 @@
-# FastApi Boilerplate code to serve smart building ML model
-This is a POC FastAPI application that calculates occupancy status of a room based on environmental values (light, temperature, humidty, CO2 etc).
+# Boilerplate code to train, serve and monitor smart building ML model solution
+This is a POC application that calculates occupancy status of a room based on environmental values (light, temperature, humidty, CO2 etc).
 
 ## Setup & Run
 
@@ -8,19 +8,27 @@ To get started, make sure you have Docker installed on your system. Then, build 
 First, clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/KhizarAziz/room-occupancy-detection-service.git
-cd room-occupancy-detection-service
+git clone https://github.com/KhizarAziz/occupancy-prediction-training-and-serving.git
+cd occupancy-prediction-training-and-serving
 ```
 
-Build the Docker image using the following command:
+
+Build Occupancy Service Image and run container
 ```bash
-docker build -t occupancy-docker-image .
+docker build -f inference_service/Dockerfile -t occupancy-service-docker-image .
+```
+```bash
+docker run -it -d -p 5000:5000 --name occupancy-service-container occupancy-service-docker-image
 ```
 
-Run the Docker container with:
 
+
+Build Drift Monitoring Image and run container
 ```bash
-docker run -d -p 5000:5000 occupancy-container
+docker build -f drift_monitoring/Dockerfile -t occupancy-monitor-docker-image .
+```
+```bash
+docker run -it -d --name occupancy-monitor-container occupancy-monitor-docker-image
 ```
 
 

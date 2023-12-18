@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import config
-from data_loaders import S3DataLoader
+from data_loaders.s3_data_loader import S3DataLoader
 
 class OccupancyDataMonitor:
     def __init__(self):
