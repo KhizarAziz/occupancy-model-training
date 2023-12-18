@@ -103,4 +103,4 @@ jobs:
         sudo docker rmi ${{ env.MONITOR_IMAGE_NAME }} || true
         cd ${{ env.WORKING_DIR }}
         sudo docker build -f drift_monitoring/Dockerfile -t ${{ env.MONITOR_IMAGE_NAME }} .
-        sudo docker run -it -d -p 5000:5000 --name ${{ env.MONITOR_CONTAINER_NAME }} ${{ env.MONITOR_IMAGE_NAME }}'
+        sudo docker run -it -d --name ${{ env.MONITOR_CONTAINER_NAME }} ${{ env.MONITOR_IMAGE_NAME }}'
