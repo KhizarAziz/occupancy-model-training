@@ -31,7 +31,7 @@ jobs:
 
     # Builds the Docker image
     - name: Build Docker Image
-      run: docker build -t $IMAGE_NAME .
+      run: docker build -f inference_service/Dockerfile -t $IMAGE_NAME .
 
     # Runs the Docker container and executes the tests
     # The container runs in detached mode and sleeps for 10 seconds to allow the service to start
