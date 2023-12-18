@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-import config
+from config import config
 from data_loaders.s3_data_loader import S3DataLoader
 
 class OccupancyDataMonitor:
     def __init__(self):
-        self.data_loader = S3DataLoader(config.S3_BUCKET_NAME, config.DATA_FOLDER_IN_S3)
+        self.data_loader = S3DataLoader(config.DATA_BUCKET, config.DATA_FOLDER_IN_S3)
 
     def analyze_new_data(self):
         # fetch current data stats
