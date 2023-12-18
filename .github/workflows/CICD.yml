@@ -67,9 +67,6 @@ jobs:
     - name: Test SSH Connection
       run: ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH Test Successful'"
 
-#      run: ssh -i ~/.ssh/id_rsa -vvv -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH Test Successful'"
-
-
     # Step to sync the code to the EC2 instance
     - name: Sync to EC2
       run: |
@@ -83,6 +80,7 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}    # SSH username for EC2
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH private key for authentication
 
+
     - name: Occ Service Docker build and restart
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.USERNAME }}@${{ secrets.HOST }} '
@@ -90,10 +88,10 @@ jobs:
         sudo docker rm ${{ env.CONTAINER_NAME }}  || true
         sudo docker rmi ${{ env.IMAGE_NAME }} || true
         cd ${{ env.WORKING_DIR }}
-        sudo docker build -t ${{ env.IMAGE_NAME }} .
+        sudo docker build -f inference_service/Dockerfile -t ${{ env.IMAGE_NAME }} .
         sudo docker run -it -d -p 5000:5000 --name ${{ env.CONTAINER_NAME }} ${{ env.IMAGE_NAME }}'
 
-
+# sudo docker build -t ${{ env.IMAGE_NAME }} .
 
   # MONITOR_CONTAINER_NAME: occupancy-monitor-container
   # MONITOR_IMAGE_NAME: occupancy-monitor-docker-image
