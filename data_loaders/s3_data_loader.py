@@ -77,7 +77,20 @@ class S3DataLoader:
         try:
             assert isinstance(file_key, str) and file_key, "file_key must be a non-empty string"
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=file_key)
-            json_content = json.loads(response['Body'].read().decode('utf-8'))
+
+            # Asserting that the response contains the 'Body' key
+            assert 'Body' in response, "Response does not contain 'Body'"
+            body = response['Body'].read()
+            # Asserting that the body is not empty
+            assert body, "Response body is empty"
+            # Decoding the body and loading JSON
+            decoded_body = body.decode('utf-8')
+            # Asserting that the decoded body is not empty
+            assert decoded_body, "Decoded body is empty"
+            json_content = json.loads(decoded_body)
+            # Asserting that the JSON content is not empty
+            assert json_content, "JSON content is empty"
+
             return json_content
         except Exception as e:
             print(f"Error reading JSON file: {e}")
