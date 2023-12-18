@@ -9,7 +9,8 @@ class OccupancyDataMonitor:
 
     def analyze_new_data(self):
         # fetch current data stats
-        baseline_data_stats = self.data_loader.read_json_to_dict(config.CURRENT_DATA_STATS)
+        current_stats_path = config.DATA_FOLDER_IN_S3 + "/" + config.CURRENT_DATA_STATS
+        baseline_data_stats = self.data_loader.read_json_to_dict(current_stats_path)
 
         # fetch new data
         all_data_df = self.data_loader.read_all_txt_to_df()
